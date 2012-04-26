@@ -16,7 +16,7 @@
  * @package    symfony
  * @subpackage widget
  * @author     Fabien Potencier <fabien.potencier@symfony-project.com>
- * @version    SVN: $Id: sfWidgetFormJQueryDate.class.php 30197 2010-07-11 04:43:47Z Kris.Wallsmith $
+ * @version    SVN: $Id: sfWidgetFormJQueryDate.class.php 24548 2009-11-30 10:03:16Z fabien $
  */
 class sfWidgetFormJQueryDate extends sfWidgetForm
 {
@@ -40,6 +40,7 @@ class sfWidgetFormJQueryDate extends sfWidgetForm
     $this->addOption('image', false);
     $this->addOption('config', '{}');
     $this->addOption('culture', '');
+    $this->addOption('can_be_empty', 'true');
     $this->addOption('date_widget', new sfWidgetFormDate());
 
     parent::configure($options, $attributes);
@@ -70,6 +71,22 @@ class sfWidgetFormJQueryDate extends sfWidgetForm
       $image = sprintf(', buttonImage: "%s", buttonImageOnly: true', $this->getOption('image'));
     }
 
+    $onSelectFunction = '';
+    if (is_array($configArray = $this->getOption("config")))
+    {
+    	if (isset($configArray["onSelect"]))
+    	{
+	    	$onSelectFunction = $configArray["onSelect"]."();";
+	    	unset($configArray["onSelect"]);
+    	}
+    	if (empty($configArray))
+    	{
+    		$config = "{}";
+    	}
+    } else {
+    	$config = $configArray;
+    }
+    
     return $this->getOption('date_widget')->render($name, $value, $attributes, $errors).
            $this->renderTag('input', array('type' => 'hidden', 'size' => 10, 'id' => $id = $this->generateId($name).'_jquery_control', 'disabled' => 'disabled')).
            sprintf(<<<EOF
@@ -91,7 +108,7 @@ class sfWidgetFormJQueryDate extends sfWidgetForm
   function wfd_%s_check_linked_days()
   {
     var daysInMonth = 32 - new Date(jQuery("#%s").val(), jQuery("#%s").val() - 1, 32).getDate();
-    jQuery("#%s option").attr("disabled", "");
+    jQuery("#%s option").removeAttr("disabled");
     jQuery("#%s option:gt(" + (%s) +")").attr("disabled", "disabled");
 
     if (jQuery("#%s").val() > daysInMonth)
@@ -105,8 +122,10 @@ class sfWidgetFormJQueryDate extends sfWidgetForm
       minDate:    new Date(%s, 1 - 1, 1),
       maxDate:    new Date(%s, 12 - 1, 31),
       beforeShow: wfd_%s_read_linked,
-      onSelect:   wfd_%s_update_linked,
-      showOn:     "button"
+      onSelect:   function(dateText, inst){wfd_%s_update_linked(dateText, inst); %s},
+      showOn:     "button",
+      yearRange: "%s:%s",
+      changeYear: true
       %s
     }, jQuery.datepicker.regional["%s"], %s, {dateFormat: "yy-mm-dd"}));
   });
@@ -122,11 +141,14 @@ EOF
       $prefix,
       $this->generateId($name.'[year]'), $this->generateId($name.'[month]'),
       $this->generateId($name.'[day]'), $this->generateId($name.'[day]'),
-      ($this->getOption('date_widget')->getOption('can_be_empty') ? 'daysInMonth' : 'daysInMonth - 1'),
+      ($this->getOption('can_be_empty') ? 'daysInMonth' : 'daysInMonth - 1'),
       $this->generateId($name.'[day]'), $this->generateId($name.'[day]'),
-      $id,
+      $id, 
       min($this->getOption('date_widget')->getOption('years')), max($this->getOption('date_widget')->getOption('years')),
-      $prefix, $prefix, $image, $this->getOption('culture'), $this->getOption('config'),
+      $prefix, 
+      $prefix, $onSelectFunction,
+      min($this->getOption('date_widget')->getOption('years')), max($this->getOption('date_widget')->getOption('years')),
+      $image, $this->getOption('culture'), $config,
       $this->generateId($name.'[day]'), $this->generateId($name.'[month]'), $this->generateId($name.'[year]'),
       $prefix
     );
