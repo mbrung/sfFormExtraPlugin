@@ -44,6 +44,7 @@ class sfWidgetFormJQueryAutocompleter extends sfWidgetFormInput
     $this->addRequiredOption('url');
     $this->addOption('value_callback');
     $this->addOption('config', '{ }');
+    $this->addOption("with_clear",false);
 
     // this is required as it can be used as a renderer class for sfWidgetFormChoice
     $this->addOption('choices');
@@ -65,6 +66,12 @@ class sfWidgetFormJQueryAutocompleter extends sfWidgetFormInput
   {
     $visibleValue = $this->getOption('value_callback') ? call_user_func($this->getOption('value_callback'), $value) : $value;
 
+    $clear_button = "";
+    if ($this->getOption("with_clear"))
+    {
+    	$clear_button = image_tag("gomme.png",array("onclick"=>sprintf('$("#%s,#%s").val("");',$this->generateId('autocomplete_'.$name),$this->generateId($name))));
+    }
+    
     return $this->renderTag('input', array('type' => 'hidden', 'name' => $name, 'value' => $value)).
            parent::render('autocomplete_'.$name, $visibleValue, $attributes, $errors).
            sprintf(<<<EOF
@@ -90,7 +97,7 @@ EOF
       $this->getOption('url'),
       $this->getOption('config'),
       $this->generateId($name)
-    );
+    ).$clear_button;
   }
 
   /**
