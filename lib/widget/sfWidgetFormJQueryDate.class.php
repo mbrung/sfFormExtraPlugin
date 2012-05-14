@@ -103,6 +103,10 @@ class sfWidgetFormJQueryDate extends sfWidgetForm
     jQuery("#%s").val(parseInt(date.substring(0, 4), 10));
     jQuery("#%s").val(parseInt(date.substring(5, 7), 10));
     jQuery("#%s").val(parseInt(date.substring(8), 10));
+    if ($.isFunction($.fn.valid)) // Integrate with jQuery.validate
+    {
+    	$("#%s").valid();
+    }
   }
 
   function wfd_%s_check_linked_days()
@@ -137,7 +141,7 @@ EOF
       $prefix, $id,
       $this->generateId($name.'[year]'), $this->generateId($name.'[month]'), $this->generateId($name.'[day]'),
       $prefix,
-      $this->generateId($name.'[year]'), $this->generateId($name.'[month]'), $this->generateId($name.'[day]'),
+      $this->generateId($name.'[year]'), $this->generateId($name.'[month]'), $this->generateId($name.'[day]'), $this->generateId($name.'[day]'),
       $prefix,
       $this->generateId($name.'[year]'), $this->generateId($name.'[month]'),
       $this->generateId($name.'[day]'), $this->generateId($name.'[day]'),
